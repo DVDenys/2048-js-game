@@ -9,8 +9,87 @@ grid.randomEmptyCell().tile = new Tile(gameBoard)
 setupInput()
 
 function setupInput() {
-  window.addEventListener("keydown", handleInput, { once: true })
+  document.addEventListener("keydown", handleInput, { once: true });
+  document.addEventListener("touchstart", handleTouchStart, false);
+  document.addEventListener("touchmove", handleTouchMove, false);
 }
+
+//swipe
+let x1 = null;
+let y1 = null;
+
+function handleTouchStart(e) {
+  x1 = e.touches[0].clientX;
+  y1 = e.touches[0].clientY;
+}
+
+async function handleTouchMove(e) {
+  if(!x1 || !y1) {
+    return false;
+  }
+
+  let x2 = e.touches[0].clientX
+  let y2 = e.touches[0].clientY
+   
+  let xDiff = x2 - x1;
+  let yDiff = y2 - y1;
+
+  if (Math.abs(xDiff) > Math.abs(yDiff)) {
+    switch (!xDiff) {
+      case xDiff > 0:
+        if (!canMoveLeft()) {
+          setupInput()
+          return
+        }
+        await moveLeft()
+        break
+      case xDiff < 0:
+        if (!canMoveRight()) {
+          setupInput()
+          return
+        }
+        await moveRight()
+        break
+      default:
+        setupInput()
+        return
+    }
+  } else {
+    switch (!yDiff) {
+      case yDiff > 0:
+        if (!canMoveUp()) {
+          setupInput()
+          return
+        }
+        await moveUp()
+        break
+      case yDiff < 0:
+        if (!canMoveDown()) {
+          setupInput()
+          return
+        }
+        await moveDown()
+        break
+  }}
+  x1 = null;
+  y1 = null;
+
+  grid.cells.forEach(cell => cell.mergeTiles())
+
+  const newTile = new Tile(gameBoard)
+  grid.randomEmptyCell().tile = newTile
+
+  if (!canMoveUp() && !canMoveDown() && !canMoveLeft() && !canMoveRight()) {
+    newTile.waitForTransition(true).then(() => {
+      alert("You lose")
+      location.reload() 
+    })
+    return
+  }
+
+  setupInput()
+}
+//swipe-end
 
 async function handleInput(e) {
   switch (e.key) {
